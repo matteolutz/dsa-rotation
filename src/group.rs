@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use itertools::Itertools;
+use rand::RngExt;
 
 use crate::{
     person::{CourseId, Person},
@@ -32,8 +33,22 @@ impl Group {
     pub fn persons<'a>(
         &'a self,
         all_persons: &'a [Arc<Person>],
-    ) -> impl Iterator<Item = &'a Arc<Person>> + '_ {
+    ) -> impl Iterator<Item = &'a Arc<Person>> + 'a {
         self.person_indices.iter().map(|i| &all_persons[*i])
+    }
+
+    pub fn random_person<'a>(&'a self, all_persons: &'a [Arc<Person>]) -> &'a Arc<Person> {
+        let index = self.person_indices[rand::rng().random_range(0..self.person_indices.len())];
+        &all_persons[index]
+    }
+
+    pub fn swap_random_person_with(&mut self, other: &mut Group) {
+        let own_index = rand::rng().random_range(0..self.person_indices.len());
+        let other_index = rand::rng().random_range(0..other.person_indices.len());
+
+        let tmp = self.person_indices[own_index];
+        self.person_indices[own_index] = other.person_indices[other_index];
+        other.person_indices[other_index] = tmp;
     }
 
     pub fn score<const N: usize>(
@@ -71,5 +86,11 @@ impl ScoredGroup {
 
     pub fn score(&self) -> f32 {
         self.score
+    }
+}
+
+impl From<ScoredGroup> for Group {
+    fn from(value: ScoredGroup) -> Self {
+        value.group
     }
 }

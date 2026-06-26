@@ -8,6 +8,7 @@ use crate::{
 };
 
 mod group;
+mod permutation;
 mod person;
 mod solver;
 mod weights;
@@ -28,10 +29,14 @@ fn main() {
     let rounds = solver.solve();
 
     // create output csv file with output-{random}.csv
-    let output_path = format!("output-{}.csv", rand::random_range(1000000..9999999));
+    let current_local = chrono::Local::now();
+    let output_path = format!("output_{}.csv", current_local.format("%H-%M-%S"));
     let mut output_file = std::fs::File::create(&output_path).unwrap();
 
-    writeln!(output_file, "Kurs 1;Kurs 2;Kurs 3;Kurs 4;Kurs 5;Kurs 6;");
+    let _ = writeln!(
+        output_file,
+        "Kurs 1;Kurs 2;Kurs 3;Kurs 4;Kurs 5;Kurs 6;Score"
+    );
     for round in rounds {
         for g in round
             .groups()
@@ -40,14 +45,14 @@ fn main() {
         {
             for person_idx in g.group().person_indices() {
                 let person = solver.get_person(*person_idx);
-                write!(output_file, "{}, ", person);
+                let _ = write!(output_file, "{}, ", person);
             }
 
-            write!(output_file, ";");
+            let _ = write!(output_file, ";");
         }
 
-        writeln!(output_file, "");
+        let _ = writeln!(output_file, "{}", round.score());
     }
 
-    output_file.flush();
+    let _ = output_file.flush();
 }

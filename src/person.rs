@@ -14,9 +14,9 @@ impl std::fmt::Display for PersonKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PersonKind::AL => write!(f, "AL"),
-            PersonKind::Ass { n } => write!(f, "{}. Ass", n),
+            PersonKind::Ass { n } => write!(f, "{}. Ass", n + 1),
             PersonKind::KuMu => write!(f, "KuMu"),
-            PersonKind::KL { course_id, n } => write!(f, "KL {}/{}", course_id, n),
+            PersonKind::KL { course_id, n } => write!(f, "{}. KL (K{})", n + 1, course_id + 1),
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, sync::Arc};
+use std::sync::Arc;
 
 use itertools::Itertools;
 use rand::seq::SliceRandom;
@@ -8,34 +8,17 @@ use rayon::{
 };
 
 use crate::{
-    group::{Group, ScoredGroup},
+    group::Group,
+    permutation::{Permutation, ScoredPermutation},
     person::{CourseId, Person},
     weights::{PTCWeights, PTPWeights},
 };
 
-mod worker;
+const N_PAIR_SWAP_MUTATIONS: usize = 100;
+const N_RANDOM_MUTATIONS: usize = 100;
 
-pub type Permutation = Vec<Group>;
-
-const N_RANDOM_MUTATIONS: usize = 1000;
-const N_GENERATIONS: usize = 10000;
-const N_MAX_DESCENDANTS: usize = 20;
-
-#[derive(Debug, Clone)]
-pub struct ScoredPermutation {
-    groups: Vec<ScoredGroup>,
-    score: f32,
-}
-
-impl ScoredPermutation {
-    pub fn groups(&self) -> &[ScoredGroup] {
-        &self.groups
-    }
-
-    pub fn score(&self) -> f32 {
-        self.score
-    }
-}
+const N_GENERATIONS: usize = 100;
+const N_MAX_DESCENDANTS: usize = 5;
 
 pub struct Solver<const NCOURSES: usize> {
     ptp_weights: PTPWeights,
@@ -43,8 +26,6 @@ pub struct Solver<const NCOURSES: usize> {
 
     n_time_slots: usize,
     group_size: usize,
-
-    n_threads: usize,
 
     persons: Vec<Arc<Person>>,
 }
@@ -69,8 +50,6 @@ impl<const NCOURSES: usize> Solver<NCOURSES> {
 
             persons,
             n_time_slots,
-
-            n_threads: num_cpus::get(),
         }
     }
 
@@ -110,6 +89,15 @@ impl<const NCOURSES: usize> Solver<NCOURSES> {
         }
     }
 
+    fn score_permutation_filtered(&self, permutation: Permutation) -> Option<ScoredPermutation> {
+        let scored = self.score_permutation(permutation);
+        if scored.score.is_infinite() {
+            None
+        } else {
+            Some(scored)
+        }
+    }
+
     fn update_weights<'a>(&mut self, groups: impl IntoIterator<Item = &'a Group>) {
         for group in groups {
             // PTP weights
@@ -125,23 +113,27 @@ impl<const NCOURSES: usize> Solver<NCOURSES> {
         }
     }
 
-    fn generate_mutations(
-        &self,
-        scored_permutations: Vec<ScoredPermutation>,
-    ) -> Vec<ScoredPermutation> {
-        let mut mutations = Vec::with_capacity(
-            scored_permutations.len() + N_RANDOM_MUTATIONS * scored_permutations.len(),
-        );
+    fn make_mutations(&self, best_options: Vec<ScoredPermutation>) -> Vec<ScoredPermutation> {
+        best_options
+            .into_par_iter()
+            .flat_map_iter(|parent| {
+                std::iter::once(parent.clone())
+                    .chain((0..N_PAIR_SWAP_MUTATIONS).filter_map(move |_| {
+                        let mut groups: Permutation = parent.clone().into();
+                        groups.shuffle(&mut rand::rng());
 
-        for permutation in scored_permutations {
-            mutations.push(permutation);
+                        let (front, back) = groups.split_at_mut(1);
+                        let (a, b) = (&mut front[0], &mut back[0]);
 
-            for _ in 0..N_RANDOM_MUTATIONS {
-                mutations.push(self.score_permutation(self.generate_permutation()));
-            }
-        }
+                        a.swap_random_person_with(b);
 
-        mutations
+                        self.score_permutation_filtered(groups)
+                    }))
+                    .chain((0..N_RANDOM_MUTATIONS).filter_map(|_| {
+                        self.score_permutation_filtered(self.generate_permutation())
+                    }))
+            })
+            .collect()
     }
 
     fn solve_slot(&mut self) -> ScoredPermutation {
@@ -155,16 +147,7 @@ impl<const NCOURSES: usize> Solver<NCOURSES> {
                 break;
             }
 
-            let mut mutations: Vec<_> = best_options
-                .into_par_iter()
-                .flat_map_iter(|parent| {
-                    std::iter::once(parent).chain(
-                        (0..N_RANDOM_MUTATIONS)
-                            .map(|_| self.score_permutation(self.generate_permutation())),
-                    )
-                })
-                .collect();
-
+            let mut mutations = self.make_mutations(best_options);
             mutations.par_sort_unstable_by(|a, b| a.score.total_cmp(&b.score));
 
             let best_total_score = mutations.first().unwrap().score;
