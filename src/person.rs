@@ -24,14 +24,14 @@ impl std::fmt::Display for PersonKind {
 #[derive(Debug, Clone)]
 pub struct Person {
     pub kind: PersonKind,
-    pub name: String,
+    pub name: Option<String>,
 }
 
 impl Person {
-    pub fn kl(course_id: CourseId, n: u8, name: &str) -> Self {
+    pub fn kl(course_id: CourseId, n: u8, name: Option<&str>) -> Self {
         Self {
             kind: PersonKind::KL { course_id, n },
-            name: name.to_string(),
+            name: name.map(|name| name.to_string()),
         }
     }
 
@@ -55,7 +55,11 @@ impl Person {
 
 impl std::fmt::Display for Person {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({})", self.name, self.kind)
+        if let Some(name) = self.name.as_ref() {
+            write!(f, "{} ({})", name, self.kind)
+        } else {
+            write!(f, "{}", self.kind)
+        }
     }
 }
 
@@ -81,11 +85,11 @@ mod test {
     fn test_is_forbidden_with() {
         let person1 = Person {
             kind: PersonKind::KL { course_id: 1, n: 1 },
-            name: "Alice".to_string(),
+            name: Some("Alice".to_string()),
         };
         let person2 = Person {
             kind: PersonKind::KL { course_id: 1, n: 2 },
-            name: "Bob".to_string(),
+            name: Some("Bob".to_string()),
         };
         assert!(person1.is_forbidden_with(&person2));
     }
@@ -94,11 +98,11 @@ mod test {
     fn test_is_not_forbidden_with() {
         let person1 = Person {
             kind: PersonKind::KL { course_id: 1, n: 1 },
-            name: "Alice".to_string(),
+            name: Some("Alice".to_string()),
         };
         let person2 = Person {
             kind: PersonKind::KL { course_id: 2, n: 1 },
-            name: "Bob".to_string(),
+            name: Some("Bob".to_string()),
         };
         assert!(!person1.is_forbidden_with(&person2));
     }

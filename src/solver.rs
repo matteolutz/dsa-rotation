@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 
 use itertools::Itertools;
 use rand::seq::SliceRandom;
@@ -19,6 +19,28 @@ const N_RANDOM_MUTATIONS: usize = 100;
 
 const N_GENERATIONS: usize = 200;
 const N_MAX_DESCENDANTS: usize = 10;
+
+const PTP_WEIGHT_INCREMENT: f32 = 1.0;
+const PTC_WEIGHT_INCREMENT: f32 = 5.0;
+
+pub struct SolverResult {
+    rounds: Vec<ScoredPermutation>,
+    solver: Solver,
+}
+
+impl SolverResult {
+    pub fn rounds(&self) -> &[ScoredPermutation] {
+        &self.rounds
+    }
+}
+
+impl Deref for SolverResult {
+    type Target = Solver;
+
+    fn deref(&self) -> &Self::Target {
+        &self.solver
+    }
+}
 
 pub struct Solver {
     ptp_weights: PTPWeights,
@@ -57,8 +79,34 @@ impl Solver {
         }
     }
 
+    pub fn num_persons(&self) -> usize {
+        self.persons.len()
+    }
+
     pub fn get_person(&self, index: usize) -> Arc<Person> {
         self.persons[index].clone()
+    }
+
+    /// Returns the number of times the person has visited the course,
+    /// or `None` if the weight is infinite (meaning the person was forbidden from visiting the course).
+    pub fn course_visits_for(&self, course_id: CourseId, person_idx: usize) -> usize {
+        let weight = self.ptc_weights.get(course_id, person_idx).unwrap();
+        if weight.is_finite() {
+            (weight / PTC_WEIGHT_INCREMENT) as usize
+        } else {
+            0
+        }
+    }
+
+    /// Returns the number of pairings between the two persons,
+    /// or `0.0` if the weight is infinite (meaning the pairing was forbidden).
+    pub fn pairings_for(&self, person_a: usize, person_b: usize) -> usize {
+        let weight = self.ptp_weights.get(person_a, person_b).unwrap();
+        if weight.is_finite() {
+            (weight / PTP_WEIGHT_INCREMENT) as usize
+        } else {
+            0
+        }
     }
 
     fn generate_permutation(&self) -> Permutation {
@@ -107,12 +155,13 @@ impl Solver {
             // PTP weights
             for comb in group.person_indices().iter().combinations(2) {
                 let (a, b) = (comb[0], comb[1]);
-                self.ptp_weights.add(*a, *b, 1.0);
+                self.ptp_weights.add(*a, *b, PTP_WEIGHT_INCREMENT);
             }
 
             // PTC weights
             for person in group.person_indices() {
-                self.ptc_weights.add(group.course_id(), *person, 5.0);
+                self.ptc_weights
+                    .add(group.course_id(), *person, PTC_WEIGHT_INCREMENT);
             }
         }
     }
@@ -171,7 +220,7 @@ impl Solver {
         the_best
     }
 
-    pub fn solve(&mut self) -> Vec<ScoredPermutation> {
+    pub fn solve(mut self) -> SolverResult {
         let mut rounds = Vec::with_capacity(self.n_time_slots);
 
         for i in 0..self.n_time_slots {
@@ -183,6 +232,9 @@ impl Solver {
             rounds.push(round_result);
         }
 
-        rounds
+        SolverResult {
+            rounds,
+            solver: self,
+        }
     }
 }
