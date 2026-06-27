@@ -44,7 +44,7 @@ where
                 persons
                     .iter()
                     .map(|person_b| {
-                        if person_a == person_b || person_a.is_forbidden_with(person_b) {
+                        if person_a == person_b || person_a.is_pairing_forbidden(person_b) {
                             f32::INFINITY
                         } else {
                             0.0
@@ -70,7 +70,7 @@ impl PTCWeights {
                 persons
                     .iter()
                     .map(|person| {
-                        if person.is_in_course(course_id as CourseId) {
+                        if person.is_course_forbidden(course_id as CourseId) {
                             f32::INFINITY
                         } else {
                             0.0

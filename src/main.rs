@@ -1,4 +1,4 @@
-use std::{io::Write, sync::Arc};
+use std::io::Write;
 
 use clap::Parser;
 use itertools::Itertools;
@@ -8,6 +8,7 @@ use crate::{
     solver::Solver,
 };
 
+mod constraint;
 mod group;
 mod permutation;
 mod person;
@@ -24,13 +25,11 @@ struct Args {}
 fn main() {
     let args = Args::parse();
 
-    let persons: Vec<Arc<Person>> = (0..N_COURSES as CourseId)
-        .flat_map(|course_id| {
-            let kl_a = Arc::new(Person::kl(course_id, 0, None));
-            let kl_b = Arc::new(Person::kl(course_id, 1, None));
-            [kl_a, kl_b]
-        })
-        .collect();
+    let persons = (0..N_COURSES as CourseId).flat_map(|course_id| {
+        let kl_a = Person::kl(course_id, 0, None);
+        let kl_b = Person::kl(course_id, 1, None);
+        [kl_a, kl_b]
+    });
 
     let solver = Solver::new(persons, N_COURSES, N_TIME_SLOTS);
     let result = solver.solve();
