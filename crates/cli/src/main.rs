@@ -3,17 +3,7 @@ use std::io::Write;
 use clap::Parser;
 use itertools::Itertools;
 
-use crate::{
-    person::{CourseId, Person},
-    solver::Solver,
-};
-
-mod constraint;
-mod group;
-mod permutation;
-mod person;
-mod solver;
-mod weights;
+use solver::{CourseId, Person, Solver};
 
 const N_COURSES: usize = 6;
 const N_TIME_SLOTS: usize = 6;

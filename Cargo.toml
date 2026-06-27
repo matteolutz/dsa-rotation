@@ -1,15 +1,12 @@
-[package]
-name = "dsa-rotation-rust"
+[workspace]
+members = ["crates/solver", "crates/cli"]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 
-[features]
-default = ["cli"]
-cli = ["dep:clap"]
+[workspace.dependencies]
+solver = { path = "./crates/solver" }
 
-[dependencies]
-chrono = "0.4.45"
-clap = { version = "4.6.1", features = ["derive"], optional = true }
 itertools = "0.15.0"
-rand = "0.10.1"
-rayon = "1.12.0"

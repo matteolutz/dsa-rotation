@@ -1,0 +1,9 @@
+[package]
+name = "solver"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+rand = "0.10.1"
+rayon = "1.12.0"
+itertools.workspace = true
