@@ -4132,6 +4132,7 @@ dependencies = [
 name = "ui"
 version = "0.1.0"
 dependencies = [
+ "itertools",
  "serde",
  "serde_json",
  "solver",

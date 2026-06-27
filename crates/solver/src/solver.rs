@@ -32,6 +32,10 @@ impl SolverResult {
     pub fn rounds(&self) -> &[ScoredPermutation] {
         &self.rounds
     }
+
+    pub fn total_score(&self) -> usize {
+        self.rounds.iter().map(|r| r.score as usize).sum()
+    }
 }
 
 impl Deref for SolverResult {
@@ -81,6 +85,10 @@ impl Solver {
 
     pub fn num_persons(&self) -> usize {
         self.persons.len()
+    }
+
+    pub fn persons(&self) -> &[Arc<Person>] {
+        &self.persons
     }
 
     pub fn get_person(&self, index: usize) -> Arc<Person> {

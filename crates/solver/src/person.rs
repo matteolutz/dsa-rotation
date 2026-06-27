@@ -75,6 +75,16 @@ impl Person {
     }
 }
 
+impl Person {
+    pub fn to_short_string(&self) -> String {
+        if let Some(name) = self.name.as_ref() {
+            return name.to_string();
+        } else {
+            return self.kind.to_string();
+        }
+    }
+}
+
 impl std::fmt::Display for Person {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(name) = self.name.as_ref() {
