@@ -59,9 +59,30 @@ where
 }
 
 #[derive(Debug, Clone)]
-pub struct PTCWeights<const N: usize>([Vec<f32>; N]);
+pub struct PTCWeights(Vec<Vec<f32>>);
 
-impl<const N: usize> PTCWeights<N> {
+impl PTCWeights {
+    pub fn new(persons: impl AsRef<[Arc<Person>]>, n_courses: usize) -> Self {
+        let persons = persons.as_ref();
+
+        let weights = (0..n_courses)
+            .map(|course_id| {
+                persons
+                    .iter()
+                    .map(|person| {
+                        if person.is_in_course(course_id as CourseId) {
+                            f32::INFINITY
+                        } else {
+                            0.0
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        Self(weights)
+    }
+
     pub fn get(&self, course_id: CourseId, person_idx: usize) -> Option<f32> {
         self.0
             .get(course_id as usize)
@@ -76,30 +97,5 @@ impl<const N: usize> PTCWeights<N> {
             .unwrap()
             .get_mut(person_idx)
             .unwrap() += amount;
-    }
-}
-
-impl<P, const N: usize> From<P> for PTCWeights<N>
-where
-    P: AsRef<[Arc<Person>]>,
-{
-    fn from(persons: P) -> Self {
-        let persons = persons.as_ref();
-
-        let weights: [u8; N] = std::array::from_fn(|i| i as u8);
-        let weights = weights.map(|course_id| {
-            persons
-                .iter()
-                .map(|person| {
-                    if person.is_in_course(course_id) {
-                        f32::INFINITY
-                    } else {
-                        0.0
-                    }
-                })
-                .collect()
-        });
-
-        Self(weights)
     }
 }

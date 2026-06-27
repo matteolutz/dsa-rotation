@@ -20,9 +20,12 @@ const N_RANDOM_MUTATIONS: usize = 100;
 const N_GENERATIONS: usize = 200;
 const N_MAX_DESCENDANTS: usize = 10;
 
-pub struct Solver<const NCOURSES: usize> {
+pub struct Solver {
     ptp_weights: PTPWeights,
-    ptc_weights: PTCWeights<NCOURSES>,
+    ptc_weights: PTCWeights,
+
+    #[allow(unused)]
+    n_courses: usize,
 
     n_time_slots: usize,
     group_size: usize,
@@ -30,26 +33,27 @@ pub struct Solver<const NCOURSES: usize> {
     persons: Vec<Arc<Person>>,
 }
 
-impl<const NCOURSES: usize> Solver<NCOURSES> {
-    pub fn new<I, P>(persons: I, n_time_slots: usize) -> Self
+impl Solver {
+    pub fn new<I, P>(persons: I, n_courses: usize, n_time_slots: usize) -> Self
     where
         I: IntoIterator<Item = P>,
         P: Into<Arc<Person>>,
     {
         let persons: Vec<Arc<Person>> = persons.into_iter().map_into().collect();
 
-        if persons.len() % NCOURSES != 0 {
+        if persons.len() % n_courses != 0 {
             panic!("Number of persons must be divisible by the number of courses");
         }
 
         Self {
             ptp_weights: PTPWeights::from(&persons),
-            ptc_weights: PTCWeights::from(&persons),
+            ptc_weights: PTCWeights::new(&persons, n_courses),
 
-            group_size: persons.len() / NCOURSES,
+            group_size: persons.len() / n_courses,
 
             persons,
             n_time_slots,
+            n_courses,
         }
     }
 

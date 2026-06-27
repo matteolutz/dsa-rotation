@@ -51,11 +51,7 @@ impl Group {
         other.person_indices[other_index] = tmp;
     }
 
-    pub fn score<const N: usize>(
-        self,
-        ptp_weights: &PTPWeights,
-        ptc_weights: &PTCWeights<N>,
-    ) -> ScoredGroup {
+    pub fn score(self, ptp_weights: &PTPWeights, ptc_weights: &PTCWeights) -> ScoredGroup {
         let mut score = 0.0;
 
         // PTP weights

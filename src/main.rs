@@ -25,7 +25,7 @@ fn main() {
         })
         .collect();
 
-    let mut solver = Solver::<N_COURSES>::new(persons, N_TIME_SLOTS);
+    let mut solver = Solver::new(persons, N_COURSES, N_TIME_SLOTS);
     let rounds = solver.solve();
 
     // create output csv file with output-{random}.csv
