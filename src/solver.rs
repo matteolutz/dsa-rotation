@@ -17,8 +17,8 @@ use crate::{
 const N_PAIR_SWAP_MUTATIONS: usize = 100;
 const N_RANDOM_MUTATIONS: usize = 100;
 
-const N_GENERATIONS: usize = 100;
-const N_MAX_DESCENDANTS: usize = 5;
+const N_GENERATIONS: usize = 200;
+const N_MAX_DESCENDANTS: usize = 10;
 
 pub struct Solver<const NCOURSES: usize> {
     ptp_weights: PTPWeights,
