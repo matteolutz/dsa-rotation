@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { ColorPaletteGenerator } from "./utils/color";
 import { SolveResponse } from "./utils/types";
+import { Spinner } from "./components/spinner";
 
 const PAGES = ["nValues", "persons", "results"] as const;
 type Page = (typeof PAGES)[number];
@@ -22,11 +23,6 @@ export const App = () => {
     useState<ColorPaletteGenerator>(new ColorPaletteGenerator(0));
 
   const [highlightedName, setHighlightedName] = useState<string | null>(null);
-
-  const getColor = (absolutePersonIdx: number) => {
-    const frac = absolutePersonIdx / (nValues.nCourses * nValues.nKLPerCourse);
-    return `hsl(${frac * 360}, 100%, 50%)`;
-  };
 
   useEffect(() => {
     setPersons(
@@ -149,7 +145,7 @@ export const App = () => {
           (result !== null ? (
             <>
               <div className="w-full flex gap-2">
-                <span className="font-bold">Score:</span>
+                <span className="font-bold">Score (niedriger ist besser):</span>
                 <span>{result.total_score}</span>
               </div>
 
@@ -162,7 +158,7 @@ export const App = () => {
               )}
 
               <div
-                className="grid w-full *:border *:px-1 *:py-4"
+                className="grid w-full *:border *:px-1 *:py-4 rounded-md overflow-hidden"
                 style={{
                   gridTemplateColumns: `5rem repeat(${result.result[0].length}, 1fr)`,
                 }}
@@ -209,7 +205,9 @@ export const App = () => {
               </div>
             </>
           ) : (
-            <div>Loading</div>
+            <div className="size-full flex justify-center items-center">
+              <Spinner />
+            </div>
           ))}
 
         <div className="mt-auto flex w-full justify-between">

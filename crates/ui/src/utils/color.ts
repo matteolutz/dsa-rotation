@@ -3,6 +3,7 @@ export class ColorPaletteGenerator {
 
   constructor(
     private readonly maxKeys: number,
+    // @ts-expect-error unused
     private readonly overflowHueShift: number = 0,
   ) {}
 
