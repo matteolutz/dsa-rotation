@@ -64,6 +64,28 @@ export const App = () => {
     setCurrentPage(PAGES[index - 1]);
   };
 
+  const exportResults = async () => {
+    if (result === null) return;
+
+    let csv = "Zeitschiene;";
+    for (let i = 0; i < nValues.nCourses; i++) {
+      csv += `Kurs ${i + 1};`;
+    }
+
+    for (let i = 0; i < result.result.length; i++) {
+      const round = result.result[i];
+      csv += `\n${i + 1};`;
+
+      for (const course of round) {
+        csv += `${course.join(", ")};`;
+      }
+    }
+
+    await invoke("save_csv", {
+      csv,
+    });
+  };
+
   return (
     <div className="size-full flex justify-center">
       <main className="w-full max-w-400 p-6 pt-10 flex flex-col items-center gap-4">
@@ -144,9 +166,15 @@ export const App = () => {
         {currentPage === "results" &&
           (result !== null ? (
             <>
-              <div className="w-full flex gap-2">
-                <span className="font-bold">Score (niedriger ist besser):</span>
-                <span>{result.total_score}</span>
+              <div className="w-full flex justify-between items-center">
+                <div className="w-full flex gap-2 items-center">
+                  <span className="font-bold">
+                    Score (niedriger ist besser):
+                  </span>
+                  <span>{result.total_score}</span>
+                </div>
+
+                <button onClick={exportResults}>Exportieren</button>
               </div>
 
               {highlightedName !== null && (

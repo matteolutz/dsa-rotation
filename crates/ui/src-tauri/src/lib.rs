@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use solver::{CourseId, Person, Solver};
 use tauri::async_runtime::spawn_blocking;
+use tauri_plugin_dialog::DialogExt;
 
 #[derive(serde::Serialize)]
 struct SolveResponse {
@@ -60,11 +61,36 @@ async fn solve(n_time_slots: usize, persons: Vec<Vec<String>>) -> Result<SolveRe
     })
 }
 
+#[tauri::command]
+async fn save_csv(csv: String, app: tauri::AppHandle) -> Result<(), String> {
+    spawn_blocking(move || {
+        let Some(path) = app
+            .dialog()
+            .file()
+            .add_filter("CSV-File", &["csv"])
+            .set_file_name("DSA Rotation Ergebnis.csv")
+            .blocking_save_file()
+        else {
+            return;
+        };
+
+        let Some(path) = path.as_path() else {
+            return;
+        };
+
+        let _ = std::fs::write(path, csv);
+    })
+    .await
+    .map_err(|err| err.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![solve])
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![solve, save_csv])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
